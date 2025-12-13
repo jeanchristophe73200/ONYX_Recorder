@@ -1,0 +1,18 @@
+# Ignorer les fichiers système Mac
+.DS_Store
+
+# Ignorer l'environnement virtuel (trop lourd)
+venv/
+
+# Ignorer les caches Python
+__pycache__/
+*.pyc
+
+# Ignorer les données personnelles (Enregistrements & Logs)
+*.flac
+*.csv
+*.log
+onyx_memory.txt
+
+# Ignorer l'archive ZIP locale (on la mettra manuellement dans les Releases)
+*.zip
