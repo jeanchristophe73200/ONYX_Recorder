@@ -20,7 +20,7 @@ import onyx_telegram
 import onyx_log 
 import onyx_settings as config
 
-# --- ACTIVATION SURVEILLANCE V2.16 ---
+# --- ACTIVATION SURVEILLANCE V2.18 ---
 onyx_log.start_surveillance(config.RECORD_DIR)
 # -------------------------------------
 
@@ -250,6 +250,7 @@ class OnyxController:
         self.view.lbl_rec_status.configure(text="ARRÊT 3/3 : SÉCURISATION USB...", text_color="#33b5e5")
         self.view.update()
         
+        # 1. Copie du CSV
         if config.USB_PATH and os.path.exists(config.USB_PATH):
             try:
                 td = os.path.join(config.USB_PATH, "Sauvegardes_ONYX")
@@ -259,11 +260,23 @@ class OnyxController:
             except Exception as e: 
                 self.view.write_rew(f"❌ ERREUR USB: {e}")
         
+        # 2. Copie du FLAC (CORRECTION V2.18)
         if self.final_path_ref:
             short = os.path.basename(self.final_path_ref)
-            if config.USB_PATH and config.USB_PATH in self.final_path_ref:
-                self.view.write_flac(f"✅ TRANSFÉRÉ SUR USB : {short}")
+            
+            # Si on a une clé USB valide
+            if config.USB_PATH and os.path.exists(config.USB_PATH):
+                try:
+                    td = os.path.join(config.USB_PATH, "Sauvegardes_ONYX")
+                    if not os.path.exists(td): os.makedirs(td)
+                    # La copie physique du fichier lourd
+                    shutil.copy2(self.final_path_ref, os.path.join(td, short))
+                    self.view.write_flac(f"✅ TRANSFÉRÉ SUR USB : {short}")
+                except Exception as e:
+                    self.view.write_flac(f"❌ ECHEC COPIE USB : {e}")
+                    self.view.write_flac(f"⚠️ SAUVÉ SUR MAC : {short}")
             else:
+                # Pas de clé USB branchée ou configurée
                 self.view.write_flac(f"⚠️ SAUVÉ SUR MAC : {short}")
         else:
             self.view.write_flac("❌ ECHEC : FICHIER VIDE")
@@ -368,7 +381,7 @@ class OnyxController:
         if not os.path.exists(self.csv_file):
             with open(self.csv_file, mode='w', newline='', encoding='utf-8-sig') as f:
                 writer = csv.writer(f, delimiter=';')
-                writer.writerow([f"# ONYX V2.16 | MACHINE: {platform.node()} | DATE: {datetime.now()}"])
+                writer.writerow([f"# ONYX V2.18 | MACHINE: {platform.node()} | DATE: {datetime.now()}"])
                 writer.writerow(cols)
 
     def data_logger_loop(self):
@@ -409,8 +422,14 @@ class OnyxController:
             note = getattr(self, 'current_note', "")
             row.append(note)
             if note: self.current_note = ""
-            audio = now.strftime("%Y-%m-%d_%Hh00_Audio.flac") if self.model.is_recording else ""
+            
+            # --- MODIFICATION V2.17 (Maintenu) : Nom Fichier Réel ---
+            if self.model.is_recording and self.model.current_filename:
+                audio = os.path.basename(self.model.current_filename)
+            else:
+                audio = ""
             row.append(audio)
+            
             try:
                 with open(self.csv_file, 'a', newline='', encoding='utf-8-sig') as f:
                     csv.writer(f, delimiter=';').writerow(row)
