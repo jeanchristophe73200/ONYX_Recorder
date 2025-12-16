@@ -1,0 +1,7 @@
+__pycache__/
+venv/
+*.flac
+*.csv
+*.log
+onyx_memory.txt
+.DS_Store
