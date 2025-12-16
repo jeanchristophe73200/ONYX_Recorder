@@ -1,3 +1,4 @@
+[📖 Lire le Manifeste & La Vision du Projet](VISION.md)
 # ONYX V3.2 (Flux Edition)
 
 **Système de surveillance acoustique autonome pour macOS (Apple Silicon).**
